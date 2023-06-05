@@ -37,6 +37,7 @@ import {
   FileFsRef,
   PackageJson,
   spawnCommand,
+  getPrefixedEnvVars,
 } from '@vercel/build-utils';
 import {
   detectBuilders,
@@ -544,29 +545,6 @@ export default class DevServer {
     return undefined;
   }
 
-  exposePrefixedEnvVars({
-    envPrefix,
-    envs,
-  }: {
-    envPrefix: string | undefined;
-    envs: Env;
-  }): Env {
-    // TODO: expose VERCEL_GIT_ env vars as well once we add support (VCCLI-303)
-    const allowed = ['VERCEL_URL', 'VERCEL_ENV'];
-    const newEnvs: Env = {};
-    if (envPrefix) {
-      Object.keys(envs).forEach(key => {
-        if (allowed.includes(key)) {
-          newEnvs[`${envPrefix}${key}`] = envs[key];
-        }
-        newEnvs[key] = envs[key];
-      });
-      return newEnvs;
-    } else {
-      return envs;
-    }
-  }
-
   async _getVercelConfig(): Promise<VercelConfig> {
     const configPath = getVercelConfigPath(this.cwd);
 
@@ -737,9 +715,18 @@ export default class DevServer {
 
         if (envPrefix) {
           [buildEnv, runEnv, allEnv] = await Promise.all([
-            this.exposePrefixedEnvVars({ envPrefix, envs: buildEnv }),
-            this.exposePrefixedEnvVars({ envPrefix, envs: runEnv }),
-            this.exposePrefixedEnvVars({ envPrefix, envs: allEnv }),
+            {
+              ...buildEnv,
+              ...getPrefixedEnvVars({ envPrefix: envPrefix, envs: buildEnv }),
+            },
+            {
+              ...runEnv,
+              ...getPrefixedEnvVars({ envPrefix: envPrefix, envs: runEnv }),
+            },
+            {
+              ...allEnv,
+              ...getPrefixedEnvVars({ envPrefix: envPrefix, envs: allEnv }),
+            },
           ]);
         }
       }
