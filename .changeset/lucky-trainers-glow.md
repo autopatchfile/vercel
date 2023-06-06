@@ -1,6 +1,6 @@
 ---
 "@vercel/node": patch
-"@vercel/cli": patch
+"vercel": patch
 "@vercel/edge": patch
 ---
 
