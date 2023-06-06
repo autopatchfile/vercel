@@ -490,7 +490,6 @@ export default class DevServer {
       const dotenv = await fs.readFile(filePath, 'utf8');
       this.output.debug(`Using local env: ${filePath}`);
       env = parseDotenv(dotenv);
-      env = this.injectSystemValuesInDotenv(env);
     } catch (err: unknown) {
       if (!isErrnoException(err) || err.code !== 'ENOENT') {
         throw err;
@@ -676,21 +675,12 @@ export default class DevServer {
       this.getLocalEnv('.env.build', vercelConfig.build?.env),
     ]);
 
-    let allEnv = { ...buildEnv, ...runEnv };
-
     // If no .env/.build.env is present, use cloud environment variables
-    if (Object.keys(allEnv).length === 0) {
+    if (Object.keys({ ...runEnv, ...buildEnv }).length === 0) {
       const envValues = { ...this.envValues };
-      if (this.address.host) {
-        envValues['VERCEL_URL'] = this.address.host;
-      }
-      allEnv = { ...envValues };
       runEnv = { ...envValues };
       buildEnv = { ...envValues };
     }
-
-    // legacy NOW_REGION env variable
-    buildEnv['NOW_REGION'] = 'dev1';
 
     if (this.projectSettings?.autoExposeSystemEnvs) {
       // mirror how VERCEL_REGION is injected in prod/preview
@@ -699,8 +689,10 @@ export default class DevServer {
       runEnv['VERCEL_REGION'] = 'dev1';
 
       // expose VERCEL_ENV and VERCEL_URL to dev command
+      runEnv['VERCEL_ENV'] = 'development';
       buildEnv['VERCEL_ENV'] = 'development';
       if (this.address.host) {
+        runEnv['VERCEL_URL'] = this.address.host;
         buildEnv['VERCEL_URL'] = this.address.host;
       }
 
@@ -720,9 +712,7 @@ export default class DevServer {
       }
     }
 
-    // re-compute allEnv with altered envs above
-    allEnv = { ...buildEnv, ...runEnv };
-
+    let allEnv = { ...buildEnv, ...runEnv };
     this.envConfigs = { buildEnv, runEnv, allEnv };
 
     // If the `devCommand` was modified via project settings
@@ -833,20 +823,6 @@ export default class DevServer {
     }
 
     return merged;
-  }
-
-  injectSystemValuesInDotenv(env: Env): Env {
-    for (const name of Object.keys(env)) {
-      if (name === 'VERCEL_URL') {
-        env['VERCEL_URL'] = this.address.host;
-      } else if (name === 'VERCEL_REGION') {
-        env['VERCEL_REGION'] = 'dev1';
-      } else if (name === 'VERCEL_ENV') {
-        env['VERCEL_ENV'] = 'development';
-      }
-    }
-
-    return env;
   }
 
   /**
