@@ -682,6 +682,10 @@ export default class DevServer {
       buildEnv = { ...envValues };
     }
 
+    // legacy NOW_REGION env variable
+    runEnv['NOW_REGION'] = 'dev1';
+    buildEnv['NOW_REGION'] = 'dev1';
+
     if (this.projectSettings?.autoExposeSystemEnvs) {
       // mirror how VERCEL_REGION is injected in prod/preview
       // only inject in `runEnvs`, because `allEnvs` is exposed to dev command
