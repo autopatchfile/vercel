@@ -1,5 +1,15 @@
 # vercel
 
+## 30.1.3
+
+### Patch Changes
+
+- Add `client.fetchPaginated()` helper function ([#10054](https://github.com/vercel/vercel/pull/10054))
+
+- Updated dependencies [[`bc5afe24c`](https://github.com/vercel/vercel/commit/bc5afe24c4547dbf798b939199e8212c4b34038e)]:
+  - @vercel/node@2.15.0
+  - @vercel/static-build@1.3.35
+
 ## 30.1.2
 
 ### Patch Changes
