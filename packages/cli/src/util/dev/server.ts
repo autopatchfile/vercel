@@ -690,9 +690,7 @@ export default class DevServer {
     }
 
     // legacy NOW_REGION env variable
-    runEnv['NOW_REGION'] = 'dev1';
     buildEnv['NOW_REGION'] = 'dev1';
-    allEnv['NOW_REGION'] = 'dev1';
 
     if (this.projectSettings?.autoExposeSystemEnvs) {
       // mirror how VERCEL_REGION is injected in prod/preview
@@ -701,9 +699,9 @@ export default class DevServer {
       runEnv['VERCEL_REGION'] = 'dev1';
 
       // expose VERCEL_ENV and VERCEL_URL to dev command
-      allEnv['VERCEL_ENV'] = 'development';
+      buildEnv['VERCEL_ENV'] = 'development';
       if (this.address.host) {
-        allEnv['VERCEL_URL'] = this.address.host;
+        buildEnv['VERCEL_URL'] = this.address.host;
       }
 
       // automaticaly expose VERCEL_URL, VERCEL_ENV
@@ -714,23 +712,16 @@ export default class DevServer {
         const envPrefix = framework?.envPrefix;
 
         if (envPrefix) {
-          [buildEnv, runEnv, allEnv] = await Promise.all([
-            {
-              ...buildEnv,
-              ...getPrefixedEnvVars({ envPrefix: envPrefix, envs: buildEnv }),
-            },
-            {
-              ...runEnv,
-              ...getPrefixedEnvVars({ envPrefix: envPrefix, envs: runEnv }),
-            },
-            {
-              ...allEnv,
-              ...getPrefixedEnvVars({ envPrefix: envPrefix, envs: allEnv }),
-            },
-          ]);
+          buildEnv = {
+            ...buildEnv,
+            ...getPrefixedEnvVars({ envPrefix: envPrefix, envs: buildEnv }),
+          };
         }
       }
     }
+
+    // re-compute allEnv with altered envs above
+    allEnv = { ...buildEnv, ...runEnv };
 
     this.envConfigs = { buildEnv, runEnv, allEnv };
 
